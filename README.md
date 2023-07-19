@@ -1,61 +1,37 @@
-local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt")() -- funnedevmen here, Hi, credits to whoever made this lib cuz i def didnt make it lol i cant code
+local Player = game:GetService("Players").LocalPlayer
 
-local win = lib:Window("Funne Football Script",Color3.fromRGB(44, 120, 224), Enum.KeyCode.RightControl)
-
-local tab = win:Tab("Mag")
-
-local player = game.Players.LocalPlayer
-
-local rs = game:GetService("RunService")
-
-
-
-
-function magBall(ball)
-   if ball and player.Character then
-       firetouchinterest(player.Character["Left Arm"], ball, 0)
-       firetouchinterest(player.Character["Right Arm"], ball, 0)
-       task.wait()
-       firetouchinterest(player.Character["Left Arm"], ball, 1)
-       firetouchinterest(player.Character["Right Arm"], ball, 1)
-   end
+if workspace:FindFirstChild("PracticeArea") then
+    workspace.PracticeArea.Parent = workspace.Courts
 end
 
-tab:Toggle("Legit Mag",nil, function (bool)
-    shared.Mags = bool
-    rs.Stepped:Connect(function()
-    if shared.Mags and not game:GetService("ReplicatedStorage").Values.HomeQB.Value:match(player.Name) and not game:GetService("ReplicatedStorage").Values.AwayQB.Value:match(player.Name) then
-       for i,v in pairs(workspace:GetChildren()) do
-           if v.Name == "Football" and v:IsA("BasePart") then
-               wait()
-               local mag = (player.Character.Torso.Position - v.Position).Magnitude
-               magBall(v)
-               print('Legit Mag On :D')
-           end
+local GetGoal = function()
+    local Distance, Goal = 9e9;
+    
+    for _, Obj in next, workspace.Courts:GetDescendants() do
+        if Obj.Name == "Swish" and Obj.Parent:FindFirstChildOfClass("TouchTransmitter") then
+            local Magnitude = (Player.Character.Torso.Position - Obj.Parent.Position).Magnitude
+        
+            if Distance > Magnitude then
+                Distance = Magnitude
+                Goal = Obj.Parent
+            end
         end
-    else
-        wait()
-        print('Legit Mag Off :(')
     end
-    if shared.Mags and game:GetService("ReplicatedStorage").Values.HomeQB.Value:match(player.Name) or game:GetService("ReplicatedStorage").Values.AwayQB.Value:match(player.Name) then
-        print('Magz Auto-Disabled as QB/Vot me QB me Dim lik Pro')
-    end
-end)
-end)
+    
+    return Goal
+end
 
-
-tab:Bind("Bind",Enum.KeyCode.RightShift, Enum.KeyCode.RightControl , function()
-print("Pressed!")
-end)
-
-local changeclr = win:Tab("Change UI Color")
-
-changeclr:Colorpicker("Change UI Color",Color3.fromRGB(44, 120, 224), function(t)
-lib:ChangePresetColor(Color3.fromRGB(t.R * 255,  t.G * 255, t.B * 255))
-end)
-
-print("I took your ip, but hey atleast you can actually catch now!!!")
-
-
-
-
+local Hook do
+    Hook = hookmetamethod(game, "__namecall", newcclosure(function(Self, ...)
+        local Arguments = {...}
+        local NCM = getnamecallmethod()
+        
+        if Self == workspace and NCM == "FindPartOnRayWithIgnoreList" and not game:IsAncestorOf(getcallingscript()) then
+            local Goal = GetGoal()
+        
+            return Goal, Goal.Position + Vector3.new(0, 45, 0)
+        end
+    
+        return Hook(Self, ...)
+    end))
+end
